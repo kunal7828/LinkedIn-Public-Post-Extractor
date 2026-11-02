@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LinkedIn Public Post Extractor</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="app-title-wrap">
+      <h1 class="app-title">LinkedIn Post Extractor</h1>
+      <span class="app-version">v3.0</span>
+    </div>
+    <span id="status-badge" class="status-badge" data-status="IDLE">Idle</span>
+  </header>
+
+  <section class="card stats-card" aria-label="Extraction statistics">
+    <div class="stat">
+      <span class="stat-value" id="stat-found">0</span>
+      <span class="stat-label">Posts Found</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="stat-processed">0</span>
+      <span class="stat-label">Processed</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="stat-unique">0</span>
+      <span class="stat-label">Unique Records</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="stat-emails">0</span>
+      <span class="stat-label">Emails Found</span>
+    </div>
+  </section>
+
+  <section class="card progress-card" aria-label="Progress">
+    <div class="progress-track" id="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+    </div>
+    <div class="progress-meta">
+      <span id="progress-label">Ready</span>
+      <span id="progress-pct">0%</span>
+    </div>
+    <div class="last-author" id="last-author" hidden>
+      Last author: <span id="last-author-name" class="author-name"></span>
+    </div>
+    <div class="error-box" id="error-box" role="alert" hidden></div>
+  </section>
+
+  <section class="card settings-card" aria-label="Extraction settings">
+    <div class="settings-row">
+      <label for="scroll-limit">Scroll limit</label>
+      <input type="number" id="scroll-limit" min="1" max="1000" step="1" value="100" title="Maximum number of scroll steps">
+    </div>
+    <div class="settings-row">
+      <label for="scroll-delay">Scroll delay (ms)</label>
+      <input type="number" id="scroll-delay" min="500" max="10000" step="100" value="2000" title="Wait between scroll steps (min 500 ms)">
+    </div>
+  </section>
+
+  <section class="card controls-card" aria-label="Controls">
+    <div class="controls-row">
+      <button id="btn-start" class="btn btn-primary" type="button">Start</button>
+      <button id="btn-pause" class="btn" type="button" disabled>Pause</button>
+      <button id="btn-resume" class="btn" type="button" disabled>Resume</button>
+      <button id="btn-stop" class="btn btn-danger" type="button" disabled>Stop</button>
+    </div>
+    <div class="controls-row">
+      <button id="btn-clear" class="btn btn-ghost" type="button">Clear Results</button>
+    </div>
+  </section>
+
+  <section class="card exports-card" aria-label="Export options">
+    <div class="settings-row export-filter-row">
+      <label for="export-hiring-only">Hiring posts only</label>
+      <input type="checkbox" id="export-hiring-only" title="Export only posts detected as hiring posts">
+    </div>
+    <div class="settings-row export-filter-row">
+      <label for="export-batch-all">All keywords (one file each)</label>
+      <input type="checkbox" id="export-batch-all" title="Export one file per stored search keyword instead of a single combined file">
+    </div>
+    <div class="controls-row exports-row">
+      <button id="btn-export-csv" class="btn btn-export" type="button" disabled>CSV</button>
+      <button id="btn-export-json" class="btn btn-export" type="button" disabled>JSON</button>
+      <button id="btn-export-html" class="btn btn-export" type="button" disabled>HTML Report</button>
+    </div>
+  </section>
+
+  <footer class="app-footer">
+    Extracts only publicly visible data from LinkedIn search results. No login bypass, no private data.
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
