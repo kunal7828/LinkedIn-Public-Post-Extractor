@@ -267,6 +267,16 @@
       // Emails can appear in the author headline / about line as well as
       // the post body, so scan both (visible text only).
       const emails = EmailExtractor.extractEmails(`${postText}\n${authorHeadline}`);
+      // Optional: OCR emails embedded in post images (opt-in, heavy).
+      try {
+        const settings = await (NS.Storage ? NS.Storage.getSettings() : Promise.resolve({}));
+        if (settings && settings.ocrImages && NS.ImageEmailExtractor) {
+          const imageEmails = await NS.ImageEmailExtractor.extractEmailsFromImages(postElement);
+          for (const e of imageEmails) {if (!emails.includes(e)) {emails.push(e);}}
+        }
+      } catch (error) {
+        Logger.debug('[PostExtractor] image email extraction failed:', error?.message || error);
+      }
       const sourcePageUrl = Helpers.canonicalUrl(global.location?.href || '');
 
       return {

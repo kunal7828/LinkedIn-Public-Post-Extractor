@@ -238,6 +238,17 @@ function buildExportPayload(results, type, state, keyword, contextOverrides = {}
   }
 }
 
+async function ensureOffscreenDocument() {
+  if (typeof chrome.offscreen === 'undefined') {throw new Error('Offscreen API unavailable');}
+  const hasDoc = await chrome.offscreen.hasDocument();
+  if (hasDoc) {return;}
+  await chrome.offscreen.createDocument({
+    url: 'offscreen/offscreen.html',
+    reasons: ['WORKERS'],
+    justification: 'Run Tesseract.js OCR for image-based email extraction'
+  });
+}
+
 async function handleExport(message) {
   let results = await Storage.getResults();
   const state = await Storage.getState();
@@ -440,11 +451,39 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           break;
         }
 
+        case 'OCR_IMAGES': {
+          const urls = Array.isArray(message.urls) ? message.urls : [];
+          try {
+            await ensureOffscreenDocument();
+            const texts = [];
+            for (const url of urls.slice(0, 4)) {
+              try {
+                const res = await chrome.runtime.sendMessage({ type: 'OCR_IMAGE', url, target: 'offscreen' });
+                // The offscreen doc replies via the same runtime channel; but
+                // chrome.runtime.sendMessage from SW to offscreen is not direct.
+                // Fall back to a direct offscreen message using chrome.runtime.
+                texts.push(res && res.ok ? (res.text || '') : '');
+              } catch (error) {
+                Logger.debug('[ServiceWorker] OCR forward failed:', error?.message || error);
+                texts.push('');
+              }
+            }
+            sendResponse({ ok: true, texts });
+          } catch (error) {
+            sendResponse({ ok: false, error: String(error?.message || error), texts: [] });
+          }
+          break;
+        }
+
         case 'SAVE_SETTINGS': {
-          const settings = await Storage.saveSettings({
+          const patch = {
             scrollLimit: clampInt(message.settings?.scrollLimit, 1, 1000, Storage.DEFAULT_SETTINGS.scrollLimit),
             scrollDelay: clampInt(message.settings?.scrollDelay, 500, 10000, Storage.DEFAULT_SETTINGS.scrollDelay)
-          });
+          };
+          if (typeof message.settings?.ocrImages === 'boolean') {
+            patch.ocrImages = message.settings.ocrImages;
+          }
+          const settings = await Storage.saveSettings(patch);
           sendResponse({ ok: true, settings });
           break;
         }

@@ -39,7 +39,8 @@
 
   const DEFAULT_SETTINGS = {
     scrollLimit: 100,
-    scrollDelay: 2000
+    scrollDelay: 2000,
+    ocrImages: false
   };
 
   const DEFAULT_STATE = {

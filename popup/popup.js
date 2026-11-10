@@ -46,7 +46,8 @@ function readSettings() {
   limitEl.value = String(scrollLimit);
   delayEl.value = String(scrollDelay);
 
-  return { scrollLimit, scrollDelay };
+  const ocrEl = $('ocr-images');
+  return { scrollLimit, scrollDelay, ocrImages: !!(ocrEl && ocrEl.checked) };
 }
 
 /** Populate inputs from persisted settings. */
@@ -54,6 +55,8 @@ function applySettings(settings) {
   if (!settings) {return;}
   if (settings.scrollLimit) {$('scroll-limit').value = String(settings.scrollLimit);}
   if (settings.scrollDelay) {$('scroll-delay').value = String(settings.scrollDelay);}
+  const ocrEl = $('ocr-images');
+  if (ocrEl) {ocrEl.checked = !!settings.ocrImages;}
 }
 
 /** Render a status payload into the popup UI. */
@@ -265,6 +268,8 @@ function init() {
   // Keep settings saved when the user edits them (not only on Start).
   $('scroll-limit').addEventListener('change', persistSettings);
   $('scroll-delay').addEventListener('change', persistSettings);
+  const ocrEl2 = $('ocr-images');
+  if (ocrEl2) {ocrEl2.addEventListener('change', persistSettings);}
 
   // Initial status render, then poll while open.
   pollStatus();

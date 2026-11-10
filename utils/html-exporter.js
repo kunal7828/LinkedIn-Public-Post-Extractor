@@ -78,7 +78,7 @@
   }
 
   function buildCard(record) {
-    const emails = Array.isArray(record.emails) ? record.emails : [];
+    const emails = [...new Set((Array.isArray(record.emails) ? record.emails : []).map((e) => String(e).trim().toLowerCase()))].filter(Boolean);
     const emailBlock = emails.length
       ? `<div class="label">Public Email</div><div class="email">${emails.map((e) => Helpers.escapeHtml(e)).join(', ')}</div>`
       : '';

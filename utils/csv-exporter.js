@@ -40,7 +40,7 @@
       Helpers.recordIsHiring(record) ? 'Yes' : 'No',
       record.postText || '',
       record.email || '',
-      Array.isArray(record.emails) ? record.emails.join('; ') : '',
+      Array.isArray(record.emails) ? [...new Set(record.emails.map((e) => String(e).trim()))].join('; ') : '',
       record.postedTime || '',
       record.searchKeyword || '',
       record.sourcePageUrl || '',

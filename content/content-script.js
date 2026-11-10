@@ -163,6 +163,8 @@
     initialized = true;
 
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+      // OCR messages are handled by the offscreen document, not here.
+      if (message && typeof message.type === 'string' && message.type.startsWith('OCR_')) {return false;}
       handleMessage(message)
         .then((payload) => reply(sendResponse, payload))
         .catch((error) => {
