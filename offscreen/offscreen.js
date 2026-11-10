@@ -1,20 +1,37 @@
 'use strict';
 
 /**
- * Offscreen document that runs OCR (Tesseract.js) on image URLs
- * and returns extracted text. Used for image-based email extraction.
- * The image data never leaves the browser.
+ * Offscreen document that runs OCR (Tesseract.js) on image URLs.
+ *
+ * NOTE: Full OCR requires the Tesseract worker bundle, WASM core and
+ * language data to be present locally (see offscreen/README or project
+ * docs). Only the Tesseract.js wrapper is bundled here; the worker/core/
+ * language assets are NOT bundled to keep the extension small. When those
+ * assets are absent, OCR degrades gracefully and reports "unavailable"
+ * instead of breaking the extension or violating CSP.
  */
 let workerPromise = null;
+let unavailableReason = null;
 
 async function getWorker() {
+  if (unavailableReason) {throw new Error(unavailableReason);}
   if (workerPromise) {return workerPromise;}
   workerPromise = (async () => {
-    if (typeof Tesseract === 'undefined') {
-      throw new Error('Tesseract.js not loaded');
+    if (typeof Tesseract === 'undefined' || typeof Tesseract.createWorker !== 'function') {
+      unavailableReason = 'Tesseract.js wrapper not loaded';
+      throw new Error(unavailableReason);
     }
-    const worker = await Tesseract.createWorker('eng');
-    return worker;
+    try {
+      // createWorker will attempt to fetch the worker/core/language assets.
+      // If they are not bundled locally this will fail; we catch and mark
+      // OCR as unavailable rather than crashing the offscreen document.
+      const worker = await Tesseract.createWorker('eng');
+      return worker;
+    } catch (error) {
+      unavailableReason = 'OCR assets not available locally: ' + String((error && error.message) || error);
+      workerPromise = null;
+      throw new Error(unavailableReason);
+    }
   })();
   return workerPromise;
 }
@@ -32,5 +49,5 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     }
   })();
 
-  return true; // async response
+  return true;
 });

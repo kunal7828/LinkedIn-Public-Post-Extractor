@@ -3,18 +3,11 @@
   "name": "LinkedIn Public Post Extractor",
   "version": "3.0.7",
   "description": "User-triggered extractor for publicly visible LinkedIn search-result posts. No private data discovery, no LinkedIn actions.",
-  "permissions": [
-    "storage",
-    "downloads",
-    "scripting",
-    "unlimitedStorage",
-    "offscreen"
-  ],
-  "host_permissions": [
-    "https://www.linkedin.com/*",
-    "https://*.licdn.com/*",
-    "https://cdn.jsdelivr.net/*"
-  ],
+  "permissions": ["storage", "downloads", "scripting", "unlimitedStorage", "offscreen"],
+  "host_permissions": ["https://www.linkedin.com/*", "https://*.licdn.com/*"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  },
   "background": {
     "service_worker": "background/service-worker.js"
   },
@@ -36,9 +29,7 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://www.linkedin.com/search/results/*"
-      ],
+      "matches": ["https://www.linkedin.com/search/results/*"],
       "js": [
         "utils/logger.js",
         "utils/helpers.js",
@@ -58,15 +49,8 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": [
-        "offscreen/*"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
+      "resources": ["offscreen/*"],
+      "matches": ["<all_urls>"]
     }
-  ],
-  "content_security_policy": {
-    "extension_pages": "script-src 'self' https://cdn.jsdelivr.net; object-src 'self'"
-  }
+  ]
 }
