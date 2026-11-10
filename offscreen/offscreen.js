@@ -25,7 +25,9 @@ async function getWorker() {
       // createWorker will attempt to fetch the worker/core/language assets.
       // If they are not bundled locally this will fail; we catch and mark
       // OCR as unavailable rather than crashing the offscreen document.
-      const worker = await Tesseract.createWorker('eng');
+      const worker = await Tesseract.createWorker('eng', 1, {
+        workerPath: (chrome && chrome.runtime) ? chrome.runtime.getURL('offscreen/worker.min.js') : 'offscreen/worker.min.js'
+      });
       return worker;
     } catch (error) {
       unavailableReason = 'OCR assets not available locally: ' + String((error && error.message) || error);
