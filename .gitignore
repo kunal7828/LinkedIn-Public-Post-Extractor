@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Nested legacy repo (kept separate; do not fold in)
+LinkedIn-Public-Post-Extractor/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Chrome unpacked build artifacts (if any)
+*.crx
+*.pem

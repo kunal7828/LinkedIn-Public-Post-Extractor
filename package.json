@@ -1,0 +1,15 @@
+{
+  "name": "linkedin-public-post-extractor",
+  "version": "3.0.7",
+  "private": true,
+  "description": "Chrome MV3 extension that extracts publicly visible LinkedIn search-result posts.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node tests/run.js && node tests/dom/run-dom.js",
+    "test:unit": "node tests/run.js",
+    "test:dom": "node tests/dom/run-dom.js"
+  },
+  "devDependencies": {
+    "jsdom": "^31.0.0"
+  }
+}
