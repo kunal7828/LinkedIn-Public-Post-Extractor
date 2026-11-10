@@ -62,6 +62,10 @@
       <label for="ocr-images">OCR images for emails (slow)</label>
       <input type="checkbox" id="ocr-images" title="Run client-side OCR on post images to find emails embedded in images (opt-in, heavy)">
     </div>
+    <div class="settings-row">
+      <label for="daily-cap">Daily scan cap (0 = unlimited)</label>
+      <input type="number" id="daily-cap" min="0" max="100" step="1" value="0" title="Maximum number of scans per day (compliance)">
+    </div>
   </section>
 
   <section class="card controls-card" aria-label="Controls">

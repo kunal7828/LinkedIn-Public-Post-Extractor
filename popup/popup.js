@@ -47,7 +47,11 @@ function readSettings() {
   delayEl.value = String(scrollDelay);
 
   const ocrEl = $('ocr-images');
-  return { scrollLimit, scrollDelay, ocrImages: !!(ocrEl && ocrEl.checked) };
+  const capEl = $('daily-cap');
+  const rawCap = Number(capEl ? capEl.value : 0);
+  const dailyCap = Number.isFinite(rawCap) ? Math.min(100, Math.max(0, Math.round(rawCap))) : 0;
+  if (capEl) {capEl.value = String(dailyCap);}
+  return { scrollLimit, scrollDelay, ocrImages: !!(ocrEl && ocrEl.checked), dailyCap };
 }
 
 /** Populate inputs from persisted settings. */
@@ -57,6 +61,8 @@ function applySettings(settings) {
   if (settings.scrollDelay) {$('scroll-delay').value = String(settings.scrollDelay);}
   const ocrEl = $('ocr-images');
   if (ocrEl) {ocrEl.checked = !!settings.ocrImages;}
+  const capEl = $('daily-cap');
+  if (capEl && typeof settings.dailyCap === 'number') {capEl.value = String(settings.dailyCap);}
 }
 
 /** Render a status payload into the popup UI. */
@@ -270,6 +276,8 @@ function init() {
   $('scroll-delay').addEventListener('change', persistSettings);
   const ocrEl2 = $('ocr-images');
   if (ocrEl2) {ocrEl2.addEventListener('change', persistSettings);}
+  const capEl2 = $('daily-cap');
+  if (capEl2) {capEl2.addEventListener('change', persistSettings);}
 
   // Initial status render, then poll while open.
   pollStatus();

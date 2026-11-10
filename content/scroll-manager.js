@@ -273,6 +273,9 @@
           continue;
         }
 
+        // Persist in-flight record so a tab death mid-card is recoverable.
+        try {await Storage.saveState({ inFlightRecord: record });} catch { /* ignore */ }
+
         // Never persist after a Stop/Clear request slipped in mid-card.
         if (this._stopped || this._resetting) {break;}
 
@@ -286,6 +289,7 @@
             this._processed.add(quickKey);
             this._retries.delete(quickKey);
             this._currentAuthor = record.authorName;
+            try {await Storage.saveState({ inFlightRecord: null });} catch { /* ignore */ }
             Logger.info(`[ScrollManager] saved record: ${record.postId} (${record.authorName})`);
           } else {
             // Stored dedupe says duplicate (e.g., reload).
@@ -346,6 +350,16 @@
 
       try {
         await this.init();
+
+        // Crash recovery: append any record that was extracted but not yet
+        // persisted before a previous tab death.
+        try {
+          const st = await Storage.getState();
+          if (st && st.inFlightRecord) {
+            await Storage.appendResult(st.inFlightRecord);
+            await Storage.saveState({ inFlightRecord: null });
+          }
+        } catch { /* ignore */ }
 
         // Single-scan lock: refuse if another live tab owns the scan.
         const incoming = await Storage.getState();

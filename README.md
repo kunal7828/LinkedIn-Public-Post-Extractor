@@ -30,7 +30,7 @@ It does **not** bypass logins, touch private data, call hidden APIs, or perform 
 | Text expansion | `expandPost()` — visibility check, scroll-into-view, safe click on "See more", MutationObserver + polling wait, stale-element re-location, max 2 retries |
 | Scroll engine | Controlled async loop with rAF, configurable delay, bottom detection + verification wait, auto-stop when no new posts appear |
 | Deduplication | Priority: `postUrl` → `postId` → `hash(authorProfileUrl + normalizedPostText)`; a post can never be exported twice |
-| Persistence | Results are cached in memory and flushed to `chrome.storage.local` in **batched, debounced writes** (max ~1 s stale, explicit checkpoints at every scroll round / stop / pause / clear), plus `unlimitedStorage` for large runs; interrupted scans auto-resume after a page reload |
+| Persistence | Results are stored in **IndexedDB** (append-only, scalable, crash-safe) with cross-context version sync; scanner state/settings stay in `chrome.storage.local`; legacy `chrome.storage.local` results are migrated automatically; interrupted scans auto-resume after a page reload |
 | Scan lock | A single scan runs at a time: the owning tab is recorded in `state.scanTabId`, control commands are routed to that tab, and starting elsewhere hands the scan off cleanly |
 | Scope | Content scripts are only injected on `https://www.linkedin.com/search/results/*` (declared in the manifest and re-checked at runtime) |
 | Exports | CSV (13 exact columns, UTF-8 BOM for Excel), JSON array, printable HTML report |

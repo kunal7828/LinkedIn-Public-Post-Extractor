@@ -347,6 +347,18 @@ async function handleStart(message) {
     throw new Error('Open a LinkedIn search-results page first.');
   }
 
+  // Daily volume cap (compliance): 0 = unlimited.
+  const settings = await Storage.getSettings();
+  const cap = Number(settings.dailyCap) || 0;
+  if (cap > 0) {
+    const state = await Storage.getState();
+    const today = new Date().toISOString().slice(0, 10);
+    const count = state.dailyScanDate === today ? (Number(state.dailyScanCount) || 0) : 0;
+    if (count >= cap) {
+      throw new Error(`Daily scan cap reached (${cap}/day). Try again tomorrow or raise the cap in settings.`);
+    }
+  }
+
   const state = await Storage.getState();
   const ownerTabId = state.scanTabId;
   if (typeof ownerTabId === 'number' && ownerTabId !== tab.id) {
@@ -374,6 +386,14 @@ async function handleStart(message) {
     options,
     tabId: tab.id
   });
+  // Bump daily scan counter.
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const st = await Storage.getState();
+    const prevCount = st.dailyScanDate === today ? (Number(st.dailyScanCount) || 0) : 0;
+    await Storage.saveState({ dailyScanDate: today, dailyScanCount: prevCount + 1 });
+  } catch { /* ignore */ }
+
   return { ok: true, ...(response || {}) };
 }
 
@@ -482,6 +502,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           };
           if (typeof message.settings?.ocrImages === 'boolean') {
             patch.ocrImages = message.settings.ocrImages;
+          }
+          if (typeof message.settings?.dailyCap !== 'undefined') {
+            patch.dailyCap = Math.min(100, Math.max(0, Number(message.settings.dailyCap) || 0));
           }
           const settings = await Storage.saveSettings(patch);
           sendResponse({ ok: true, settings });
