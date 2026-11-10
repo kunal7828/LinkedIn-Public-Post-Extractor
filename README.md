@@ -1,8 +1,16 @@
 # LinkedIn Public Post Extractor 3.0.7
 
+[![Manifest V3](https://img.shields.io/badge/Manifest-V3-4285F4?style=flat-square&logo=googlechrome)](manifest.json)
+[![Chrome](https://img.shields.io/badge/chrome-114%2B%2B-4285F4?style=flat-square&logo=googlechrome)](manifest.json)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-29%20passing-brightgreen?style=flat-square)](tests/)
+[![CI](https://github.com/kunal7828/LinkedIn-Public-Post-Extractor/actions/workflows/test.yml/badge.svg)](https://github.com/kunal7828/LinkedIn-Public-Post-Extractor/actions/workflows/test.yml)
+
 A production-grade Chrome Extension (Manifest V3) that extracts **publicly visible** post data from LinkedIn search-result pages (`https://www.linkedin.com/search/results/content/?keywords=...`).
 
 It does **not** bypass logins, touch private data, call hidden APIs, or perform any LinkedIn actions (likes, comments, messages, connection requests).
+
+**What you get:** a 13-field record per post (author, headline, text, email, timestamp, hiring flag) with one-click CSV / JSON / printable-HTML export, a single-scan lock, and everything stored **locally** in IndexedDB — nothing is uploaded anywhere.
 
 > ⚠️ **Terms of Service / personal-data risk** — automated scrolling and bulk collection of public posts (which often contain personal data such as names, headlines and email addresses) may violate LinkedIn's User Agreement and can be restricted by local data-protection law (e.g. GDPR). Use it only on data you are authorized to process, keep volumes low, and review LinkedIn's terms before running scans. You are responsible for how the extracted data is used.
 
@@ -13,9 +21,10 @@ It does **not** bypass logins, touch private data, call hidden APIs, or perform 
 - **Visible data only** — every field is read from the rendered DOM (text, links, aria/`data-*` attributes). Nothing is read from network payloads, GraphQL, or DevTools APIs.
 - **No LinkedIn actions** — the extension never posts, comments, likes, follows, or messages anyone. It only scrolls the page (like a human) and clicks **"See more"** to expand truncated post text.
 - **No login bypass** — works only on pages you can already see while logged into your own account.
-- **Emails only from visible text** — the email extractor scans the rendered post text/author areas. It never queries third-party enrichment services.
+- **Emails only from visible text** — the email extractor scans the rendered post text and author headline. It never queries third-party enrichment services. *(Optional, off by default: local OCR can also read emails printed inside post images — the image never leaves the browser.)*
 - **Respects page behavior** — configurable scroll delay (min 500 ms) and scroll limit (max 1000). No rate-limit or CAPTCHA circumvention.
-- **User-controlled** — Start / Pause / Resume / Stop with live counters. Results are stored locally only (`chrome.storage.local`); nothing is uploaded anywhere.
+- **User-controlled** — Start / Pause / Resume / Stop with live counters. Results are stored locally only (IndexedDB + `chrome.storage.local`); nothing is uploaded anywhere.
+- **Daily cap** — an optional per-day scan limit (default `0` = unlimited) so collection volume stays under your control.
 
 ---
 
@@ -99,8 +108,16 @@ linkedin-public-post-extractor/
 │   ├── popup.html                    # UI markup (version read from manifest)
 │   ├── popup.css                     # UI styles
 │   └── popup.js                      # Popup → Service Worker messaging + 800 ms status polling
+├── offscreen/
+│   ├── offscreen.html                # Offscreen document (OCR host)
+│   ├── offscreen.js                  # OCR message handler
+│   ├── tesseract.min.js              # Tesseract.js wrapper (bundled locally, no CDN)
+│   └── worker.min.js                 # Tesseract worker (bundled locally)
 ├── tests/
-│   └── run.js                        # Unit tests for the pure modules (no Chrome APIs needed)
+│   ├── run.js                        # Unit tests for the pure modules (no Chrome APIs needed)
+│   ├── dom/run-dom.js                # jsdom smoke tests against a saved LinkedIn fixture
+│   └── fixtures/linkedin-search.html # Saved LinkedIn search-results markup
+├── .github/workflows/test.yml        # CI: npm test + syntax check + JSON validation
 └── utils/
     ├── logger.js                     # Namespaced console logger with DEBUG flag
     ├── helpers.js                    # canonicalUrl, normalization, escaping, hiring detection, etc.
@@ -304,7 +321,7 @@ Planned / candidate improvements, in rough priority order:
 
 | Status | Item | Notes |
 |---|---|---|
-| ✅ v3.0.7 | Reliability & safety hardening | Single-scan tab lock + owner routing, batched storage flush + `unlimitedStorage`, keyword-scoped exports, hiring negations, CSV formula guard, XSS fix in HTML report, manifest scope limited to `/search/results/*`, unit test suite |
+| ✅ v3.0.7 | Reliability & safety hardening | Single-scan tab lock + owner routing, **IndexedDB** result storage with legacy migration, crash recovery for in-flight records, daily scan cap, keyword-scoped exports, hiring negations, CSV formula guard, XSS fix in HTML report, strict MV3 CSP (no remote scripts), manifest scope limited to `/search/results/*`, unit + DOM test suites, CI |
 | ✅ v3.0.6 | Batch export (all stored keywords) | One file per stored search keyword in a single export; silent downloads to the default folder |
 | ✅ v3.0.5 | Export filter: "Hiring posts only" | Popup checkbox; CSV / JSON / HTML export only hiring posts (legacy records re-classified on the fly) |
 | ✅ v3.0.4 | Hiring post detection | `isHiring` field, CSV `Hiring Post` column, HTML report badge + All/Hiring/Non-Hiring filter |
@@ -316,6 +333,36 @@ Planned / candidate improvements, in rough priority order:
 | ⏳ | Summary stats in popup for hiring posts | Hiring count alongside the existing live counters |
 | ⏳ | Local CSV backup / restore | Manual snapshot + restore of `chrome.storage.local` data |
 | ⏳ | Options page | Migrate settings from popup to a full options page |
+
+---
+
+## Contributing
+
+1. Fork the repo and create a branch off `main` (`git checkout -b feature/xyz`).
+2. Keep `main` stable — open a **pull request** instead of pushing directly.
+3. Run the checks before pushing:
+   ```bash
+   npm test        # 21 unit + 8 DOM tests
+   npm run lint    # ESLint (flat config)
+   ```
+4. CI runs the same commands on every push and PR.
+
+### Adding a selector
+
+All DOM selectors live in `content/selectors.js`. When LinkedIn changes its markup, add a robust candidate to the relevant array — prefer `data-*` / `aria` / semantic selectors, structural classes only as fallback — and add a fixture under `tests/fixtures/` with a matching DOM test.
+
+---
+
+## Releases
+
+- Tag a version: `git tag v3.0.7 && git push origin v3.0.7`
+- GitHub Actions can build the `.zip`; load it in Chrome via `chrome://extensions` → **Load unpacked** (unzipped) or upload the zip to a GitHub Release.
+
+---
+
+## License
+
+[MIT](LICENSE) — see the `LICENSE` file.
 
 ---
 
